@@ -8,11 +8,25 @@ class Gem::Commands::PathCommand < Gem::Command
   end
 
   def execute
-    name = get_one_gem_name
-    gemspec = find_by_name(name)
-    puts gemspec.full_gem_path
+    _, gem_name, filename = $*
+    if gem_name.nil?
+      raise Gem::CommandLineError, "Gem name missing"
+    end
+    gemspec = find_by_name(gem_name)
+    path = gemspec.full_gem_path
+
+    if filename.nil?
+      puts path
+      return
+    end
+
+    filepath = Dir["#{path}/**/#{filename}"].first
+    if filepath.nil?
+      raise Gem::CommandLineError, "Name not found within gem files"
+    end
+    puts filepath
   rescue Gem::LoadError
-    alert_error "gem '#{name}' not found"
+    alert_error "gem '#{gem_name}' not found"
     terminate_interaction 1
   end
 
